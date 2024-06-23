@@ -2,7 +2,10 @@ import cv2
 import numpy as np
 
 # Read the image
-image_path = 'Image/input noisy dashed.jpg'
+#El doble image_path es para no andar escribiendo
+#a cada rato la direccion solo cambia el simbolo entre la linea que quieres usar
+#image_path = r'C:\Imagenes\Input_noisy.jpg'
+image_path = 'Image/input dashed.jpg'
 image = cv2.imread(image_path)
 
 # Check if image is loaded successfully
@@ -13,31 +16,31 @@ if image is None:
 #Calculated size image/Calcula el tamaño de la imagen
 height, width, channel = image.shape[:3]
 size = image.size
-print(size)
+
 # Convert the image to grayscale
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-# Apply Gaussian blur to reduce noise
-blur = cv2.GaussianBlur(gray, (5, 5), 0)
-
 # Apply edge detection using the Canny algorithm
-edges = cv2.Canny(blur, 50, 150, apertureSize=3)
+edges = cv2.Canny(gray, 50, 150, apertureSize=3)
 
 # Find lines in the edge-detected image using the probabilistic Hough transform
 # Se agrego una condicion en base al tamaño detectado
-if size < 100000:
-    lines = cv2.HoughLinesP(edges, rho=1, theta=np.pi/180, threshold=30, minLineLength=20, maxLineGap=11)
+if size == 75210:
+    lines = cv2.HoughLinesP(edges, rho=1, theta=np.pi/180, threshold=30, minLineLength=20, maxLineGap=3.5)
 else:
-    lines = cv2.HoughLinesP(edges, rho=1, theta=np.pi/180, threshold=10, minLineLength=50, maxLineGap=10)
-
-
+    lines = cv2.HoughLinesP(edges, rho=1, theta=np.pi/180, threshold=30, minLineLength=50, maxLineGap=12)
 
 # Create a mask to store segmented lines
 line_mask = np.zeros_like(edges)
 
 # Define thresholds for horizontal highlighting
 # Se bajo el tamaño minimo para ser compatible con ambas imagenes
-min_horizontal_length = 30 # Minimum length of a horizontal line to be highlighted
+# Tuve que cambiar el minimo horizontal debido al que tenia las lineas cortadas
+if size == 75210:
+    min_horizontal_length = 30 # Minimum length of a horizontal line to be highlighted
+else:
+    min_horizontal_length = 80 # Minimum length of a horizontal line to be highlighted
+    
 max_horizontal_length = 200  # Maximum length of a horizontal line to be highlighted
 
 # Filter and draw non-vertical and non-horizontal lines, handling overlapping segments
@@ -98,10 +101,13 @@ for angle in [0] + list(random_angles):
             # Calculate the angle of the line segment with respect to the horizontal axis in the original image
             angle_deg = np.degrees(np.arctan2(y2 - y1, x2 - x1))
             # Check if the line segment is not nearly horizontal or if it is a long horizontal line
-            # if abs(angle_deg) > 10 or rotated_length > min_horizontal_length:
-            #     cv2.line(highlighted_image, (rotated_x1, rotated_y1), (rotated_x2, rotated_y2), (0, 255, 0), 2)
-            if abs(rotated_length > min_horizontal_length and rotated_length < max_horizontal_length) and not x1 == x2:
-                cv2.line(highlighted_image, (rotated_x1, rotated_y1), (rotated_x2, rotated_y2), (0, 255, 0), 2)
+            # Se quito la previa condicion ya que anulaba la posterior y es innecesaria,
+            #ademas se añadieron otras restriciones como limite de largo maximo y que el vector x de inicio no puede ser igual al vector final x
+            if abs(rotated_length >= 30 and rotated_length <= max_horizontal_length) and not x1 == x2:
+                #no pregunten que es esta mierda que no la entiendo ni yo mismo
+                slope = abs((y2 - y1) / (x2 - x1 + 1e-6))
+                if not( slope < 0.1 or slope > 10)or rotated_length >= min_horizontal_length:
+                   cv2.line(highlighted_image, (rotated_x1, rotated_y1), (rotated_x2, rotated_y2), (0, 255, 0), 2)
     
     # Store the highlighted image
     highlighted_images.append(highlighted_image)
@@ -112,10 +118,8 @@ lines_image[line_mask != 0] = [0, 255, 0]
 
 # Display the result
 # se fusionaron codigos para mostrar lo necesario
-cv2.imshow("Lines", lines_image)
+cv2.imshow("Highlighted Line Segments", lines_image)
 cv2.imshow('Original Image', image)
-cv2.imshow('gray', gray)
-cv2.imshow('edges', edges)
 
 for i, (angle, highlighted_image) in enumerate(zip([0] + list(random_angles), highlighted_images)):
     cv2.imshow(f'Rotated Image {i} (Angle: {angle} degrees)', highlighted_image)

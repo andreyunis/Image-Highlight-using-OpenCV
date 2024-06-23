@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # Read the image
-image_path = 'Image\input noisy.jpg'
+image_path = 'Image/input noisy.jpg'
 image = cv2.imread(image_path)
 
 # Check if image is loaded successfully

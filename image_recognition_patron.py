@@ -37,8 +37,9 @@ line_mask = np.zeros_like(edges)
 
 # Define thresholds for horizontal highlighting
 # Se bajo el tamaño minimo para ser compatible con ambas imagenes
-min_horizontal_length = 30 # Minimum length of a horizontal line to be highlighted
-max_horizontal_length = 200  # Maximum length of a horizontal line to be highlighted
+min_horizontal_length = 50
+ # Minimum length of a horizontal line to be highlighted
+max_horizontal_length = 300  # Maximum length of a horizontal line to be highlighted
 
 # Filter and draw non-vertical and non-horizontal lines, handling overlapping segments
 if lines is not None:
@@ -46,7 +47,6 @@ if lines is not None:
         x1, y1, x2, y2 = line[0]
         # Calculate the absolute slope of the line
         slope = abs((y2 - y1) / (x2 - x1 + 1e-6))  # Adding a small value to avoid division by zero
-        
         # Skip lines close to horizontal or vertical
         if slope < 0.1 or slope > 10:
             length = abs(x2 - x1)
@@ -111,7 +111,6 @@ lines_image = np.copy(image)
 lines_image[line_mask != 0] = [0, 255, 0]
 
 # Display the result
-# se fusionaron codigos para mostrar lo necesario
 cv2.imshow("Lines", lines_image)
 cv2.imshow('Original Image', image)
 cv2.imshow('gray', gray)
